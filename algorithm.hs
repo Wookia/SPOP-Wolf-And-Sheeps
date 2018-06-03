@@ -29,6 +29,9 @@ printBoard' index (Board (x:xs))
 getIndex :: Position -> Int
 getIndex (Position (x, y)) = y*8+x
 
+getY :: Position -> Int
+getY (Position (x, y)) = y
+
 getPosition :: Int -> Position
 getPosition n = Position (mod n 8, quot n 8)
 
@@ -115,15 +118,36 @@ next Computer = Human
 betaMax = -100
 alfaMax = 100
 
-gameStatusEvaluation :: Board -> Int
-gameStatusEvaluation _ = 1
+getSheepsBehind :: Position -> [Position] -> Int
+getSheepsBehind (Position(wx, wy)) [] = 0
+getSheepsBehind (Position(wx, wy)) (x:xs) = 
+    if(wy <= (getY x))
+        then 1 + (getSheepsBehind (Position(wx, wy)) xs )
+        else getSheepsBehind (Position(wx, wy)) xs 
 
+gameStatusEvaluation :: Board -> Int
+gameStatusEvaluation board = 
+    let Position (wx, wy) = getWolfPosition board
+        wolfPossibleMoves = length (getPossibleWolfBoards board)
+        sheepPositions = getSheepPositions board
+        sheepBehind = getSheepsBehind (Position(wx, wy)) sheepPositions
+    in 
+        if (wy == 0)
+            then
+                alfaMax
+            else if (wolfPossibleMoves == 0)
+                then 
+                    betaMax
+                else
+                    sheepBehind * 15 + wolfPossibleMoves * 5 + (7 - wy) * 5
 alphaBeta :: Int -> Board -> Board
-alphaBeta depth board = snd (alphaBeta' depth betaMax alfaMax Computer board)
+alphaBeta depth board = snd (alphaBeta' depth alfaMax betaMax Computer board)
 
 alphaBeta' :: Int -> Int -> Int -> Player -> Board -> (Int, Board)
 alphaBeta' depth alfa beta player board
     | depth == 0 = (gameStatusEvaluation board, board)
+    | (gameStatusEvaluation board) == alfaMax && player == Computer = (alfaMax, board)
+    | (gameStatusEvaluation board) == betaMax && player == Human = (betaMax, board)
     | otherwise = 
         let (value, funcExtreme) = if player == Computer then (alfa, max) else (beta, min)
             helper alfa beta v [] = (v, Board [])
@@ -161,9 +185,9 @@ updateBoard' board current future index
     | index == future = (Sheep : (updateBoard' board current future (index + 1)))
     | otherwise =  ((getFieldByIndex board index) : (updateBoard' board current future (index + 1)))
 
-depth = 5
+depth = 100
 
-
+tempBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
 gameCycle board player = do  
     if(player == Computer)
         then do
@@ -183,5 +207,7 @@ gameCycle board player = do
 
 
 main = do
+    -- print (fst (alphaBeta' depth betaMax alfaMax Computer tempBoard))
+    -- print (gameStatusEvaluation tempBoard)
     gameCycle (generateBoard (Position (0, 7)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]) Computer
     
