@@ -12,18 +12,19 @@ data Board = Board [Field] deriving (Show)
 data Position = Position (Int, Int) deriving (Eq, Show)
 
 printBoard :: Board -> [Char]
-printBoard board = (printBoard' 0 board)
+printBoard board = ("  1 2 3 4 5 6 7 8" ++ (printBoard' 0 board))
 
 displayField :: Field -> [Char]
-displayField Wolf = "w"
-displayField Sheep = "s"
-displayField Empty = "o"
+displayField Wolf   = "w|"
+displayField Sheep  = "s|"
+displayField Empty  = " |"
 
 printBoard' :: Int -> Board -> [Char]
 printBoard' _ (Board []) = "\n"
 printBoard' index (Board (x:xs)) 
-    | mod index 8 == 0 = ("\n" ++ (displayField x) ++ (printBoard' (index + 1) (Board xs)))
+    | mod index 8 == 0 = ("\n" ++ show(num_y) ++"|" ++ (displayField x) ++ (printBoard' (index + 1) (Board xs)))
     | otherwise = ((displayField x) ++ (printBoard' (index + 1) (Board xs)))
+    where num_y = ((div index 8) + 1)
 
 
 getIndex :: Position -> Int
@@ -139,17 +140,69 @@ alphaBeta' depth alfa beta player board
                     else helper newAlfa newBeta newValue xs
         in helper alfa beta value (getPossibleBoards board player)
 
+-- FUNKCJE WALIDUJACE INPUT
+-- Funkcje które sprawdzają errory "*err*" zwracają FALSE, jeżeli nie ma błędów i TRUE jeżeli są
 
-
-investinput :: IO (Int, Int)
-investinput = do
-    putStrLn "x "
+investinput_current :: Board -> IO (Int,Int)
+investinput_current board = do
+    putStrLn "-> Choose X coordindate (horizontal axis (from 1 to 8): "
     tmpX <- getLine
-    putStrLn "y"
+    putStrLn "-> Choose Y coordindate (vertical axis (from 1 to 8): "
     tmpY <- getLine
     let x = read tmpX
     let y = read tmpY
-    return (x, y)
+    let occupied_positions = ((getSheepPositions board) ++ [(getWolfPosition board)])
+    let err_possible_sheep = (checkinput_error_issheep board (Position((x-1), (y-1))))
+
+    let err_check_future_motion_right = (checkinput_error_ismotion (Position(x,y)) occupied_positions)
+    let err_check_future_motion_left = (checkinput_error_ismotion (Position((x-2),y)) occupied_positions)
+    let err_check_motion = ((err_check_future_motion_left == True) && (err_check_future_motion_right == True))
+
+    if ((err_possible_sheep == False) && (err_check_motion == False)) then return ((x-1), (y-1))
+    else do putStrLn "-> Incorrect coordinates"
+            putStrLn "-> Please try again"
+            investinput_current board
+
+checkinput_error_ismotion :: Position -> [Position] -> Bool
+checkinput_error_ismotion (Position(x,y)) occupied = 
+    do let err_occupy = (elem (Position(x,y)) occupied)
+       let err_out = (checkinput_error_boundaries (Position(x,y)))
+       let side_err = (err_out || err_occupy)
+       if (side_err) then True
+       else False
+
+investinput_destination :: Position -> Board -> IO(Int, Int)
+investinput_destination (Position(x, y)) board = do
+    putStrLn "-> Choose side which you want to move [L - left or R - right]"
+    tmpside <- getLine
+    let side = tmpside
+    let occupied_positions = ((getSheepPositions board) ++ [(getWolfPosition board)])
+    let new_coor = (investinput_find_motion side (Position(x,y)))
+
+    let err_check_motion = (checkinput_error_ismotion (Position(new_coor)) occupied_positions)
+    if ((err_check_motion == False) &&  (new_coor /= (0,0))) then return new_coor
+    else do 
+        putStrLn "-> You can't move this sheep in this direction, please try again:"
+        investinput_destination (Position(x, y)) board
+    
+
+checkinput_error_boundaries :: Position -> Bool
+checkinput_error_boundaries (Position(x,y))  =
+    do if ((x<0) || (x>7) || (y<0) || (y>7)) then True
+        else False
+
+investinput_find_motion :: String -> Position ->(Int, Int)
+investinput_find_motion side (Position(x,y))
+    | side == "L" = ((x-1),(y+1))
+    | side == "R" = ((x+1),(y+1))
+    |otherwise    = (0,0)
+
+checkinput_error_issheep :: Board -> Position -> Bool
+checkinput_error_issheep board p
+    | (elem p possible) = False
+    | otherwise = True
+    where possible = (getSheepPositions board)
+
 
 updateBoard :: Board -> Int -> Int -> Board
 updateBoard board current future = Board $ updateBoard' board current future 0
@@ -163,21 +216,26 @@ updateBoard' board current future index
 
 depth = 5
 
-
 gameCycle board player = do  
     if(player == Computer)
         then do
             let currentBoard = alphaBeta depth board
+            putStrLn "-> Now your turn!"
             putStrLn (printBoard currentBoard)
             gameCycle currentBoard (next player)
         else do
+            putStrLn "-> Wanna play?"
+            putStrLn "Enter - play"
+            putStrLn "Load <dir_to_saved_play> - load game" 
+            putStrLn "Save <dir_to_save_play> - save game"
+            putStrLn "Quit - quit game"
             line <- getLine
-            unless (line == "q") $ do
-                putStrLn "Current position: "
-                from <- investinput
-                putStrLn "Destination: "
-                to <- investinput
+            unless (line == "Quit") $ do
+                from <- (investinput_current board)
+                let occupied = getSheepPositions board
+                to <- (investinput_destination (Position from) board)
                 let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                putStrLn "-> WOOF! WOOF! wolf's turn"
                 putStrLn (printBoard currentBoard)
                 gameCycle currentBoard (next player)
 
