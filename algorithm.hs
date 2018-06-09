@@ -140,7 +140,7 @@ gameStatusEvaluation board =
                 then 
                     betaMax
                 else 
-                    (3 - wy) * 5 - (abs (3 - wx)) * 5
+                    sheepBehind * 15 + wolfPossibleMoves * 5 + (3 - wy) * 5
 alphaBeta :: Int -> Board -> Board
 alphaBeta depth board = snd (alphaBeta' depth betaMax alfaMax Computer board)
 
@@ -240,7 +240,7 @@ updateBoard' board current future index
     | index == future = (Sheep : (updateBoard' board current future (index + 1)))
     | otherwise =  ((getFieldByIndex board index) : (updateBoard' board current future (index + 1)))
 
-depth = 5
+depth = 8
 
 --tempBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
 gameCycle board player = do  
