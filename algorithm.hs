@@ -99,7 +99,7 @@ xsd ::  [Position] -> [Position] -> [[Position]]
 xsd possibleSheepPositions currentSheepPositions = map (\n -> n : currentSheepPositions) possibleSheepPositions
 
 abgh :: Int -> [[Position]] -> [Position] -> [[Position]]
-abgh index [[]] _ = [[]]
+abgh index [] _ = [[]]
 abgh index [x] currentSheepPositions  = xsd x (removeItem index currentSheepPositions)
 abgh index (x:xs) currentSheepPositions =  xsd x (removeItem index currentSheepPositions) ++ (abgh (index + 1) xs currentSheepPositions)
 
