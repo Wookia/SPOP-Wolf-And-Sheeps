@@ -15,15 +15,15 @@ printBoard :: Board -> [Char]
 printBoard board = ("  1 2 3 4 5 6 7 8" ++ (printBoard' 0 board))
 
 displayField :: Field -> [Char]
-displayField Wolf   = "w|"
-displayField Sheep  = "s|"
-displayField Empty  = " |"
+displayField Wolf   = "w"
+displayField Sheep  = "s"
+displayField Empty  = " "
 
 printBoard' :: Int -> Board -> [Char]
 printBoard' _ (Board []) = "\n"
 printBoard' index (Board (x:xs)) 
-    | mod index 8 == 0 = ("\n" ++ show(num_y) ++"|" ++ (displayField x) ++ (printBoard' (index + 1) (Board xs)))
-    | otherwise = ((displayField x) ++ (printBoard' (index + 1) (Board xs)))
+    | mod index 8 == 0 = ("\n" ++ show(num_y) ++"|" ++ (displayField x) ++ "|" ++ (printBoard' (index + 1) (Board xs)))
+    | otherwise = ((displayField x) ++ "|" ++ (printBoard' (index + 1) (Board xs)))
     where num_y = ((div index 8) + 1)
 
 
