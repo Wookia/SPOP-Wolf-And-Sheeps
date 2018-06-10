@@ -378,7 +378,7 @@ input_game_diff :: IO(Int)
 input_game_diff = do
     putStrLn "-> Select game difficulty from 1 to 10"
     diff <- getLine
-    let check_empty = not(isDigit (diff!!0))
+    let check_empty = not(all isDigit diff)
     let check_digit = ((length diff) == 0)
     if (check_digit||check_empty) then do 
         putStrLn "-> Incorrect input type"
