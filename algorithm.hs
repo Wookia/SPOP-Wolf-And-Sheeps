@@ -322,9 +322,17 @@ saveFile gameCycle board player depth = do
                     putStrLn (printBoard board)
                     gameCycle board player depth
 
+checkWolfWon :: Int -> [Int] -> Bool
+checkWolfWon wolf (s:sheeps) = if (wolf < s) then checkWolfWon wolf sheeps
+                               else False
+checkWolfWon wolf [] = True
+
 gameCycle board player depth = do
     let gameScore = gameStatusEvaluation board
-    if(gameScore == 100)
+    let wolfPos = getIndex (getWolfPosition board)
+    let sheepPos = map getIndex (getSheepPositions board)
+    let wolfWon = checkWolfWon wolfPos sheepPos
+    if(gameScore == 100 || wolfWon)
         then do
             putStrLn "-> Wolf won, if you want to play agian click enter, if you want to quit type Quit"
             command <- getLine
