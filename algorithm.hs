@@ -153,10 +153,15 @@ alphaBeta depth board = snd (alphaBeta' depth betaMax alfaMax Computer board)
 alphaBeta' :: Int -> Int -> Int -> Player -> Board -> (Int, Board)
 alphaBeta' depth alfa beta player board
     | depth == 0 = (gameStatusEvaluation board, board)
-    | (gameStatusEvaluation board) == alfaMax && player == Computer = (alfaMax, board)
-    | (gameStatusEvaluation board) == betaMax && player == Computer = (betaMax, board)
+    | (gameStatusEvaluation board) == alfaMax = (alfaMax, board)
+    | (gameStatusEvaluation board) == betaMax = (betaMax, board)
     | otherwise = 
         let (value, funcExtreme) = if player == Computer then (alfa, max) else (beta, min)
+            possibleBoards = getPossibleBoards board player
+            nextBoard = if (length possibleBoards == 0)
+                then Board []
+                else possibleBoards!!0
+
             helper alfa beta v [] lastBoard = (v, lastBoard)
             helper alfa beta v (x:xs) lastBoard =
                 let v' = alphaBeta' (depth - 1) alfa beta (next player) x
@@ -170,7 +175,7 @@ alphaBeta' depth alfa beta player board
                 in if newBeta <= newAlfa
                     then (newValue, newX)
                     else helper newAlfa newBeta newValue xs newX
-        in helper alfa beta value (getPossibleBoards board player) (Board [])
+        in helper alfa beta value (getPossibleBoards board player) (nextBoard)
 
 -- FUNKCJE WALIDUJACE INPUT
 -- Funkcje które sprawdzają errory "*err*" zwracają FALSE, jeżeli nie ma błędów i TRUE jeżeli są
