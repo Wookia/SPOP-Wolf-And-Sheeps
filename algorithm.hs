@@ -256,8 +256,8 @@ loadFile gameCycle board player depth = do
     if (location == "exit")
         then do gameCycle board player depth
         else do
-            result <- try (readFile location) :: IO (Either SomeException String)
-            case result of
+            tryLoad <- try (readFile location) :: IO (Either SomeException String)
+            case tryLoad of
                 Left ex  -> do
                     putStrLn ("Something is wrong. Try again.")
                     loadFile gameCycle board player depth
@@ -268,8 +268,14 @@ loadFile gameCycle board player depth = do
                     let loadedSheep = getSheep loadedGamePos
                     putStrLn "-> Game successfully loaded"
                     let loadedBoard = generateBoard (loadedWolf) loadedSheep
-                    putStrLn (printBoard loadedBoard)
-                    gameCycle loadedBoard Human depth
+                    tryGame <- try (putStrLn (printBoard loadedBoard)) :: IO (Either SomeException ())
+                    case tryGame of
+                        Left ex -> do
+                            putStrLn ("\n[ERROR] Something is wrong with input data. Try again")
+                            loadFile gameCycle board player depth
+                        Right val -> do
+                            gameCycle loadedBoard Human depth
+
 
 saveFile gameCycle board player depth = do
     let wolfPos = getIndex (getWolfPosition board)
@@ -286,7 +292,6 @@ saveFile gameCycle board player depth = do
                     putStrLn ("Something is wrong. Try again.")
                     saveFile gameCycle board player depth
                 Right val -> do
-                    writeFile location (show wolfAndSheep)
                     putStrLn "-> Game successfully saved"
                     putStrLn (printBoard board)
                     gameCycle board player depth
