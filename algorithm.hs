@@ -1,9 +1,14 @@
 {-#LANGUAGE ScopedTypeVariables#-}
 {-# LANGUAGE DataKinds #-}
 import Data.List
+import Data.Char
+import Data.String
 import Data.Maybe
 import Control.Monad
 import Control.Exception
+import Data.Time
+import Data.Maybe (listToMaybe)
+import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout)
 
 data Player = Human | Computer deriving (Eq)
 data GameTree a = a :> [GameTree a] deriving (Show) 
@@ -172,15 +177,18 @@ alphaBeta' depth alfa beta player board
 
 investinput_current :: Board -> IO (Int,Int)
 investinput_current board = do
-    putStrLn "-> Choose X coordindate (horizontal axis (from 1 to 8): "
-    tmpX <- getLine
-    putStrLn "-> Choose Y coordindate (vertical axis (from 1 to 8): "
-    tmpY <- getLine
-    let x = read tmpX
-    let y = read tmpY
+    --putStrLn "-> Choose X coordindate (horizontal axis (from 1 to 8): "
+    --tmpX <- getLine
+    --putStrLn "-> Choose Y coordindate (vertical axis (from 1 to 8): "
+    --tmpY <- getLine
+    val <- get_input
+    let x = val!!0
+    let y = val!!1
+    --putStrLn(show(val))
+    --let x = read tmpX ::Int
+    --let y = read tmpY :: Int
     let occupied_positions = ((getSheepPositions board) ++ [(getWolfPosition board)])
     let err_possible_sheep = (checkinput_error_issheep board (Position((x-1), (y-1))))
-
     let err_check_future_motion_right = (checkinput_error_ismotion (Position(x,y)) occupied_positions)
     let err_check_future_motion_left = (checkinput_error_ismotion (Position((x-2),y)) occupied_positions)
     let err_check_motion = ((err_check_future_motion_left == True) && (err_check_future_motion_right == True))
@@ -189,6 +197,24 @@ investinput_current board = do
     else do putStrLn "-> Incorrect coordinates"
             putStrLn "-> Please try again"
             investinput_current board
+
+get_input :: IO([Int])
+get_input = do
+    putStrLn "-> Choose X coordindate (horizontal axis (from 1 to 8): "
+    tmpX <- getLine
+    putStrLn "-> Choose Y coordindate (vertical axis (from 1 to 8): "
+    tmpY <- getLine
+    let check_empty = not(isDigit (tmpX!!0)) || not(isDigit (tmpY!!0)) 
+    let check_digit = (length tmpX) == 0 || (length tmpY) == 0
+    if (check_digit||check_empty) then do 
+        putStrLn "-> Incorrect input type"
+        putStrLn "-> Please try again"
+        get_input
+    else do
+        let x = read tmpX ::Int
+        let y = read tmpY :: Int
+        return [x, y]
+
 
 checkinput_error_ismotion :: Position -> [Position] -> Bool
 checkinput_error_ismotion (Position(x,y)) occupied = 
@@ -348,8 +374,24 @@ gameCycle board player depth = do
                                         putStrLn (printBoard currentBoard)
                                         gameCycle currentBoard (next player) depth
 
-main = do
+input_game_diff :: IO(Int)
+input_game_diff = do
     putStrLn "-> Select game difficulty from 1 to 10"
-    depth :: Int  <- readLn
+    diff <- getLine
+    let check_empty = not(isDigit (diff!!0))
+    let check_digit = ((length diff) == 0)
+    if (check_digit||check_empty) then do 
+        putStrLn "-> Incorrect input type"
+        putStrLn "-> Please try again"
+        input_game_diff
+    else do
+        let new_diff = read diff ::Int
+        if ((new_diff > 0) && (new_diff < 11)) then
+            return new_diff
+        else 
+            input_game_diff
+
+main = do
+    depth <- input_game_diff
     gameCycle (generateBoard (Position (0, 7)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]) Computer depth
     
