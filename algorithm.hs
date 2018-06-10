@@ -250,7 +250,6 @@ getSheep :: [Position] -> [Position]
 getSheep (x:xs) = xs
 
 
---tempBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
 gameCycle board player depth = do  
     let gameScore = gameStatusEvaluation board
     if(gameScore == 100)
@@ -279,44 +278,48 @@ gameCycle board player depth = do
                     putStrLn "Enter - play"
                     putStrLn "Load - load game"
                     putStrLn "Save - save game"
+                    putStrLn "Restart - start new game"
                     putStrLn "Quit - quit game"
                     line <- getLine
                     if (line == "Quit" || line == "quit")
                         then do putStrLn "-> Bye bye!"
                         else if (line == "Save" || line == "save")
                             then do
-                            let wolfPos = getIndex (getWolfPosition board)
-                            let sheepPos = map getIndex (getSheepPositions board)
-                            let wolfAndSheep = wolfPos:sheepPos
-                            putStrLn "-> Where do you want to save game?"
-                            location <- getLine
-                            writeFile location (show wolfAndSheep)
-                            putStrLn "-> Game successfully saved"
-                            putStrLn (printBoard board)
-                            gameCycle board player depth
+                                let wolfPos = getIndex (getWolfPosition board)
+                                let sheepPos = map getIndex (getSheepPositions board)
+                                let wolfAndSheep = wolfPos:sheepPos
+                                putStrLn "-> Where do you want to save game?"
+                                location <- getLine
+                                writeFile location (show wolfAndSheep)
+                                putStrLn "-> Game successfully saved"
+                                putStrLn (printBoard board)
+                                gameCycle board player depth
                             else if (line == "Load" || line == "load")
                                 then do
-                                putStrLn "-> Which file would you like to load?"
-                                location <- getLine
-                                loadedGame <- readFile location
-                                let loadedGamePos = map getPosition (rList loadedGame)
-                                let loadedWolf = getWolf loadedGamePos
-                                print loadedWolf
-                                let loadedSheep = getSheep loadedGamePos
-                                print loadedSheep
-                                putStrLn "-> Game successfully loaded"
-                                let loadedBoard = generateBoard (loadedWolf) loadedSheep
-                                putStrLn (printBoard loadedBoard)
-                                gameCycle loadedBoard Human depth
-                                else do
-                                from <- (investinput_current board)
-                                let occupied = getSheepPositions board
-                                to <- (investinput_destination (Position from) board)
-                                let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
-                                putStrLn "-> WOOF! WOOF! wolf's turn"
-                                putStrLn (printBoard currentBoard)
-                                gameCycle currentBoard (next player) depth
-
+                                    putStrLn "-> Which file would you like to load?"
+                                    location <- getLine
+                                    loadedGame <- readFile location
+                                    let loadedGamePos = map getPosition (rList loadedGame)
+                                    let loadedWolf = getWolf loadedGamePos
+                                    print loadedWolf
+                                    let loadedSheep = getSheep loadedGamePos
+                                    print loadedSheep
+                                    putStrLn "-> Game successfully loaded"
+                                    let loadedBoard = generateBoard (loadedWolf) loadedSheep
+                                    putStrLn (printBoard loadedBoard)
+                                    gameCycle loadedBoard Human depth
+                                else if (line == "Restart" || line == "restart")
+                                    then do
+                                        putStrLn "-> New game"
+                                        main
+                                    else do
+                                        from <- (investinput_current board)
+                                        let occupied = getSheepPositions board
+                                        to <- (investinput_destination (Position from) board)
+                                        let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                                        putStrLn "-> WOOF! WOOF! wolf's turn"
+                                        putStrLn (printBoard currentBoard)
+                                        gameCycle currentBoard (next player) depth
 
 main = do
     putStrLn "-> Select game difficulty from 1 to 10"
