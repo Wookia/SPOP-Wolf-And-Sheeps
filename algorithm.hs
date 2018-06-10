@@ -264,6 +264,7 @@ gameCycle board player = do
             putStrLn "Enter - play"
             putStrLn "Load - load game"
             putStrLn "Save - save game"
+            putStrLn "Restart - start new game"
             putStrLn "Quit - quit game"
             line <- getLine
             if (line == "Quit" || line == "quit")
@@ -293,14 +294,18 @@ gameCycle board player = do
                         let loadedBoard = generateBoard (loadedWolf) loadedSheep
                         putStrLn (printBoard loadedBoard)
                         gameCycle loadedBoard Human
-                        else do
-                        from <- (investinput_current board)
-                        let occupied = getSheepPositions board
-                        to <- (investinput_destination (Position from) board)
-                        let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
-                        putStrLn "-> WOOF! WOOF! wolf's turn"
-                        putStrLn (printBoard currentBoard)
-                        gameCycle currentBoard (next player)
+                        else if (line == "Restart" || line == "restart")
+                            then do
+                            putStrLn "-> New game"
+                            gameCycle (generateBoard (Position (0, 7)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]) Computer
+                            else do
+                            from <- (investinput_current board)
+                            let occupied = getSheepPositions board
+                            to <- (investinput_destination (Position from) board)
+                            let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                            putStrLn "-> WOOF! WOOF! wolf's turn"
+                            putStrLn (printBoard currentBoard)
+                            gameCycle currentBoard (next player)
 
 --coś działa ale trzeba zwracać ostatni LOL
 tmpBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
