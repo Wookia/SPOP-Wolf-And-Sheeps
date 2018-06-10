@@ -240,6 +240,15 @@ updateBoard' board current future index
     | index == future = (Sheep : (updateBoard' board current future (index + 1)))
     | otherwise =  ((getFieldByIndex board index) : (updateBoard' board current future (index + 1)))
 
+rList :: String -> [Int]
+rList = read
+
+getWolf :: [Position] -> Position
+getWolf (x:xs) = x
+
+getSheep :: [Position] -> [Position]
+getSheep (x:xs) = xs
+
 depth = 8
 
 --tempBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
@@ -253,18 +262,46 @@ gameCycle board player = do
         else do
             putStrLn "-> Wanna play?"
             putStrLn "Enter - play"
-            putStrLn "Load <dir_to_saved_play> - load game" 
-            putStrLn "Save <dir_to_save_play> - save game"
+            putStrLn "Load - load game"
+            putStrLn "Save - save game"
             putStrLn "Quit - quit game"
             line <- getLine
-            unless (line == "Quit") $ do
-                from <- (investinput_current board)
-                let occupied = getSheepPositions board
-                to <- (investinput_destination (Position from) board)
-                let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
-                putStrLn "-> WOOF! WOOF! wolf's turn"
-                putStrLn (printBoard currentBoard)
-                gameCycle currentBoard (next player)
+            if (line == "Quit" || line == "quit")
+                then do putStrLn "-> Bye bye!"
+                else if (line == "Save" || line == "save")
+                    then do
+                    let wolfPos = getIndex (getWolfPosition board)
+                    let sheepPos = map getIndex (getSheepPositions board)
+                    let wolfAndSheep = wolfPos:sheepPos
+                    putStrLn "-> Where do you want to save game?"
+                    location <- getLine
+                    writeFile location (show wolfAndSheep)
+                    putStrLn "-> Game successfully saved"
+                    putStrLn (printBoard board)
+                    gameCycle board player
+                    else if (line == "Load" || line == "load")
+                        then do
+                        putStrLn "-> Which file would you like to load?"
+                        location <- getLine
+                        loadedGame <- readFile location
+                        let loadedGamePos = map getPosition (rList loadedGame)
+                        let loadedWolf = getWolf loadedGamePos
+                        print loadedWolf
+                        let loadedSheep = getSheep loadedGamePos
+                        print loadedSheep
+                        putStrLn "-> Game successfully loaded"
+                        let loadedBoard = generateBoard (loadedWolf) loadedSheep
+                        putStrLn (printBoard loadedBoard)
+                        gameCycle loadedBoard Human
+                        else do
+                        from <- (investinput_current board)
+                        let occupied = getSheepPositions board
+                        to <- (investinput_destination (Position from) board)
+                        let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                        putStrLn "-> WOOF! WOOF! wolf's turn"
+                        putStrLn (printBoard currentBoard)
+                        gameCycle currentBoard (next player)
+
 --coś działa ale trzeba zwracać ostatni LOL
 tmpBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
 main = do
