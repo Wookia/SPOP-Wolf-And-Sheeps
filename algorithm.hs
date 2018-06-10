@@ -147,8 +147,8 @@ alphaBeta depth board = snd (alphaBeta' depth betaMax alfaMax Computer board)
 alphaBeta' :: Int -> Int -> Int -> Player -> Board -> (Int, Board)
 alphaBeta' depth alfa beta player board
     | depth == 0 = (gameStatusEvaluation board, board)
-    -- | (gameStatusEvaluation board) == alfaMax && player == Computer = (alfaMax, board)
-    -- | (gameStatusEvaluation board) == betaMax && player == Computer = (betaMax, board)
+    | (gameStatusEvaluation board) == alfaMax && player == Computer = (alfaMax, board)
+    | (gameStatusEvaluation board) == betaMax && player == Computer = (betaMax, board)
     | otherwise = 
         let (value, funcExtreme) = if player == Computer then (alfa, max) else (beta, min)
             helper alfa beta v [] lastBoard = (v, lastBoard)
@@ -249,64 +249,77 @@ getWolf (x:xs) = x
 getSheep :: [Position] -> [Position]
 getSheep (x:xs) = xs
 
-depth = 8
 
 --tempBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
-gameCycle board player = do  
-    if(player == Computer)
+gameCycle board player depth = do  
+    let gameScore = gameStatusEvaluation board
+    if(gameScore == 100)
         then do
-            let currentBoard = alphaBeta depth board
-            putStrLn "-> Now your turn!"
-            putStrLn (printBoard currentBoard)
-            gameCycle currentBoard (next player)
-        else do
-            putStrLn "-> Wanna play?"
-            putStrLn "Enter - play"
-            putStrLn "Load - load game"
-            putStrLn "Save - save game"
-            putStrLn "Quit - quit game"
-            line <- getLine
-            if (line == "Quit" || line == "quit")
-                then do putStrLn "-> Bye bye!"
-                else if (line == "Save" || line == "save")
-                    then do
-                    let wolfPos = getIndex (getWolfPosition board)
-                    let sheepPos = map getIndex (getSheepPositions board)
-                    let wolfAndSheep = wolfPos:sheepPos
-                    putStrLn "-> Where do you want to save game?"
-                    location <- getLine
-                    writeFile location (show wolfAndSheep)
-                    putStrLn "-> Game successfully saved"
-                    putStrLn (printBoard board)
-                    gameCycle board player
-                    else if (line == "Load" || line == "load")
-                        then do
-                        putStrLn "-> Which file would you like to load?"
-                        location <- getLine
-                        loadedGame <- readFile location
-                        let loadedGamePos = map getPosition (rList loadedGame)
-                        let loadedWolf = getWolf loadedGamePos
-                        print loadedWolf
-                        let loadedSheep = getSheep loadedGamePos
-                        print loadedSheep
-                        putStrLn "-> Game successfully loaded"
-                        let loadedBoard = generateBoard (loadedWolf) loadedSheep
-                        putStrLn (printBoard loadedBoard)
-                        gameCycle loadedBoard Human
-                        else do
-                        from <- (investinput_current board)
-                        let occupied = getSheepPositions board
-                        to <- (investinput_destination (Position from) board)
-                        let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
-                        putStrLn "-> WOOF! WOOF! wolf's turn"
-                        putStrLn (printBoard currentBoard)
-                        gameCycle currentBoard (next player)
+            putStrLn "-> Wolf won, if you want to play agian click enter, if you want to quit type Quit"
+            command <- getLine
+            if(command == "Quit" || command == "quit")
+                    then do putStrLn "-> Bye bye!"
+                    else do main
+        else if (gameScore == (-100))
+            then do 
+                putStrLn "-> You won, if you want to play agian click enter, if you want to quit type Quit"
+                command <- getLine
+                if(command == "Quit" || command == "quit")
+                        then do putStrLn "-> Bye bye!"
+                        else do main
+        else do 
+            if(player == Computer)
+                then do
+                    let currentBoard = alphaBeta depth board
+                    putStrLn "-> Now your turn!"
+                    putStrLn (printBoard currentBoard)
+                    gameCycle currentBoard (next player) depth
+                else do
+                    putStrLn "-> Wanna play?"
+                    putStrLn "Enter - play"
+                    putStrLn "Load - load game"
+                    putStrLn "Save - save game"
+                    putStrLn "Quit - quit game"
+                    line <- getLine
+                    if (line == "Quit" || line == "quit")
+                        then do putStrLn "-> Bye bye!"
+                        else if (line == "Save" || line == "save")
+                            then do
+                            let wolfPos = getIndex (getWolfPosition board)
+                            let sheepPos = map getIndex (getSheepPositions board)
+                            let wolfAndSheep = wolfPos:sheepPos
+                            putStrLn "-> Where do you want to save game?"
+                            location <- getLine
+                            writeFile location (show wolfAndSheep)
+                            putStrLn "-> Game successfully saved"
+                            putStrLn (printBoard board)
+                            gameCycle board player depth
+                            else if (line == "Load" || line == "load")
+                                then do
+                                putStrLn "-> Which file would you like to load?"
+                                location <- getLine
+                                loadedGame <- readFile location
+                                let loadedGamePos = map getPosition (rList loadedGame)
+                                let loadedWolf = getWolf loadedGamePos
+                                print loadedWolf
+                                let loadedSheep = getSheep loadedGamePos
+                                print loadedSheep
+                                putStrLn "-> Game successfully loaded"
+                                let loadedBoard = generateBoard (loadedWolf) loadedSheep
+                                putStrLn (printBoard loadedBoard)
+                                gameCycle loadedBoard Human depth
+                                else do
+                                from <- (investinput_current board)
+                                let occupied = getSheepPositions board
+                                to <- (investinput_destination (Position from) board)
+                                let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                                putStrLn "-> WOOF! WOOF! wolf's turn"
+                                putStrLn (printBoard currentBoard)
+                                gameCycle currentBoard (next player) depth
 
---coś działa ale trzeba zwracać ostatni LOL
-tmpBoard = generateBoard (Position (1, 6)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]
+
 main = do
-    -- print (alphaBeta 1 tmpBoard)
-    -- print (fst (alphaBeta' depth betaMax alfaMax Computer tempBoard))
-    -- print (gameStatusEvaluation tempBoard)
-    gameCycle (generateBoard (Position (0, 7)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]) Computer
+    putStrLn "-> Select game difficulty from 1 to 10"
+    depth :: Int  <- readLn
+    gameCycle (generateBoard (Position (0, 7)) [Position (1, 0), Position (3, 0), Position (5, 0), Position (7, 0)]) Computer depth
     
