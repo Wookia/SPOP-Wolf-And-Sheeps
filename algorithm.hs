@@ -95,20 +95,20 @@ getPossibleWolfBoards board =
         sheepPositions = getSheepPositions board
     in [generateBoard wolfPosition sheepPositions  | wolfPosition <- wolfPositions]
 
-xsd ::  [Position] -> [Position] -> [[Position]]
-xsd possibleSheepPositions currentSheepPositions = map (\n -> n : currentSheepPositions) possibleSheepPositions
+mapPossibleSheepPositions ::  [Position] -> [Position] -> [[Position]]
+mapPossibleSheepPositions possibleSheepPositions currentSheepPositions = map (\n -> n : currentSheepPositions) possibleSheepPositions
 
-abgh :: Int -> [[Position]] -> [Position] -> [[Position]]
-abgh index [] _ = [[]]
-abgh index [x] currentSheepPositions  = xsd x (removeItem index currentSheepPositions)
-abgh index (x:xs) currentSheepPositions =  xsd x (removeItem index currentSheepPositions) ++ (abgh (index + 1) xs currentSheepPositions)
+removeDuplicatedPositions :: Int -> [[Position]] -> [Position] -> [[Position]]
+removeDuplicatedPositions index [] _ = [[]]
+removeDuplicatedPositions index [x] currentSheepPositions  = mapPossibleSheepPositions x (removeItem index currentSheepPositions)
+removeDuplicatedPositions index (x:xs) currentSheepPositions =  mapPossibleSheepPositions x (removeItem index currentSheepPositions) ++ (removeDuplicatedPositions (index + 1) xs currentSheepPositions)
 
 getPossibleSheepBoards :: Board -> [Board]
 getPossibleSheepBoards board = 
     let currentSheepPositions = getSheepPositions board
         possibleSheepPositions = map (\n -> filter (checkIfFieldEmpty board) $ getPossibleSheepPositions n) $ currentSheepPositions
         wolfPosition = getWolfPosition board
-    in [generateBoard wolfPosition sheepPosition  | sheepPosition <- (abgh 0 possibleSheepPositions currentSheepPositions)]
+    in [generateBoard wolfPosition sheepPosition  | sheepPosition <- (removeDuplicatedPositions 0 possibleSheepPositions currentSheepPositions)]
 
 
     
