@@ -3,6 +3,7 @@
 import Data.List
 import Data.Maybe
 import Control.Monad
+import Control.Exception
 
 data Player = Human | Computer deriving (Eq)
 data GameTree a = a :> [GameTree a] deriving (Show) 
@@ -249,8 +250,48 @@ getWolf (x:xs) = x
 getSheep :: [Position] -> [Position]
 getSheep (x:xs) = xs
 
+loadFile gameCycle board player depth = do
+    putStrLn "-> Which file would you like to load? (type exit to go back to menu)"
+    location <- getLine
+    if (location == "exit")
+        then do gameCycle board player depth
+        else do
+            result <- try (readFile location) :: IO (Either SomeException String)
+            case result of
+                Left ex  -> do
+                    putStrLn ("Something is wrong. Try again.")
+                    loadFile gameCycle board player depth
+                Right val -> do
+                    loadedGame <- (readFile location)
+                    let loadedGamePos = map getPosition (rList loadedGame)
+                    let loadedWolf = getWolf loadedGamePos
+                    let loadedSheep = getSheep loadedGamePos
+                    putStrLn "-> Game successfully loaded"
+                    let loadedBoard = generateBoard (loadedWolf) loadedSheep
+                    putStrLn (printBoard loadedBoard)
+                    gameCycle loadedBoard Human depth
 
-gameCycle board player depth = do  
+saveFile gameCycle board player depth = do
+    let wolfPos = getIndex (getWolfPosition board)
+    let sheepPos = map getIndex (getSheepPositions board)
+    let wolfAndSheep = wolfPos:sheepPos
+    putStrLn "-> Where do you want to save game? (type exit to go back to menu)"
+    location <- getLine
+    if (location == "exit")
+        then do gameCycle board player depth
+        else do
+            result <- try (writeFile location (show wolfAndSheep)) :: IO (Either SomeException ())
+            case result of
+                Left ex  -> do
+                    putStrLn ("Something is wrong. Try again.")
+                    saveFile gameCycle board player depth
+                Right val -> do
+                    writeFile location (show wolfAndSheep)
+                    putStrLn "-> Game successfully saved"
+                    putStrLn (printBoard board)
+                    gameCycle board player depth
+
+gameCycle board player depth = do
     let gameScore = gameStatusEvaluation board
     if(gameScore == 100)
         then do
@@ -260,13 +301,13 @@ gameCycle board player depth = do
                     then do putStrLn "-> Bye bye!"
                     else do main
         else if (gameScore == (-100))
-            then do 
+            then do
                 putStrLn "-> You won, if you want to play agian click enter, if you want to quit type Quit"
                 command <- getLine
                 if(command == "Quit" || command == "quit")
                         then do putStrLn "-> Bye bye!"
                         else do main
-        else do 
+        else do
             if(player == Computer)
                 then do
                     let currentBoard = alphaBeta depth board
@@ -285,29 +326,10 @@ gameCycle board player depth = do
                         then do putStrLn "-> Bye bye!"
                         else if (line == "Save" || line == "save")
                             then do
-                                let wolfPos = getIndex (getWolfPosition board)
-                                let sheepPos = map getIndex (getSheepPositions board)
-                                let wolfAndSheep = wolfPos:sheepPos
-                                putStrLn "-> Where do you want to save game?"
-                                location <- getLine
-                                writeFile location (show wolfAndSheep)
-                                putStrLn "-> Game successfully saved"
-                                putStrLn (printBoard board)
-                                gameCycle board player depth
+                                saveFile gameCycle board player depth
                             else if (line == "Load" || line == "load")
                                 then do
-                                    putStrLn "-> Which file would you like to load?"
-                                    location <- getLine
-                                    loadedGame <- readFile location
-                                    let loadedGamePos = map getPosition (rList loadedGame)
-                                    let loadedWolf = getWolf loadedGamePos
-                                    print loadedWolf
-                                    let loadedSheep = getSheep loadedGamePos
-                                    print loadedSheep
-                                    putStrLn "-> Game successfully loaded"
-                                    let loadedBoard = generateBoard (loadedWolf) loadedSheep
-                                    putStrLn (printBoard loadedBoard)
-                                    gameCycle loadedBoard Human depth
+                                    loadFile gameCycle board player depth
                                 else if (line == "Restart" || line == "restart")
                                     then do
                                         putStrLn "-> New game"
