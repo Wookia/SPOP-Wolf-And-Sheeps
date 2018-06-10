@@ -204,7 +204,7 @@ get_input = do
     tmpX <- getLine
     putStrLn "-> Choose Y coordindate (vertical axis (from 1 to 8): "
     tmpY <- getLine
-    let check_empty = not(isDigit (tmpX!!0)) || not(isDigit (tmpY!!0)) 
+    let check_empty = not(all isDigit tmpX) || not(all isDigit tmpY)
     let check_digit = (length tmpX) == 0 || (length tmpY) == 0
     if (check_digit||check_empty) then do 
         putStrLn "-> Incorrect input type"
