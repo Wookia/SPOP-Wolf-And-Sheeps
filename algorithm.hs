@@ -297,7 +297,7 @@ loadFile gameCycle board player depth = do
                     tryGame <- try (putStrLn (printBoard loadedBoard)) :: IO (Either SomeException ())
                     case tryGame of
                         Left ex -> do
-                            putStrLn ("\n[ERROR] Something is wrong with input data. Try again")
+                            putStrLn ("\n-> [ERROR] Something is wrong with input data. Try again")
                             loadFile gameCycle board player depth
                         Right val -> do
                             gameCycle loadedBoard Human depth
@@ -347,32 +347,36 @@ gameCycle board player depth = do
                     gameCycle currentBoard (next player) depth
                 else do
                     putStrLn "-> Wanna play?"
-                    putStrLn "Enter - play"
-                    putStrLn "Load - load game"
-                    putStrLn "Save - save game"
-                    putStrLn "Restart - start new game"
-                    putStrLn "Quit - quit game"
+                    putStrLn "Enter (p) - play"
+                    putStrLn "Load (l) - load game"
+                    putStrLn "Save (s) - save game"
+                    putStrLn "Restart (r)- start new game"
+                    putStrLn "Quit (q) - quit game"
                     line <- getLine
-                    if (line == "Quit" || line == "quit")
+                    if (line == "Quit" || line == "quit" || line == "q")
                         then do putStrLn "-> Bye bye!"
-                        else if (line == "Save" || line == "save")
+                        else if (line == "Save" || line == "save" || line == "s")
                             then do
                                 saveFile gameCycle board player depth
-                            else if (line == "Load" || line == "load")
+                            else if (line == "Load" || line == "load" || line == "l")
                                 then do
                                     loadFile gameCycle board player depth
-                                else if (line == "Restart" || line == "restart")
+                                else if (line == "Restart" || line == "restart" || line == "r")
                                     then do
                                         putStrLn "-> New game"
                                         main
-                                    else do
-                                        from <- (investinput_current board)
-                                        let occupied = getSheepPositions board
-                                        to <- (investinput_destination (Position from) board)
-                                        let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
-                                        putStrLn "-> WOOF! WOOF! wolf's turn"
-                                        putStrLn (printBoard currentBoard)
-                                        gameCycle currentBoard (next player) depth
+                                    else if ((length line) == 0 || line == "p")
+                                        then do
+                                            from <- (investinput_current board)
+                                            let occupied = getSheepPositions board
+                                            to <- (investinput_destination (Position from) board)
+                                            let currentBoard = updateBoard board (getIndex (Position from)) (getIndex (Position to))
+                                            putStrLn "-> WOOF! WOOF! wolf's turn"
+                                            putStrLn (printBoard currentBoard)
+                                            gameCycle currentBoard (next player) depth
+                                        else do
+                                            putStrLn "-> Unknown command"
+                                            gameCycle board player depth
 
 input_game_diff :: IO(Int)
 input_game_diff = do
